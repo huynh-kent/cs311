@@ -1,0 +1,174 @@
+import random
+import string
+import itertools
+import operator
+
+NODE_COUNT_PER_LAYER = [4,3,2]
+arr = []
+
+class Node:
+	def __init__(self):
+		self.children = [] #connection to children
+		self.weight = [] #weight of connection to children
+		self.value = 0
+		self.node_name = ''
+		random_letters = []
+
+		for i in range(3): #set node name to random 3 uppercase letters
+			random_letters.append( random.choice(string.ascii_uppercase) )
+		self.node_name = ''.join(random_letters)
+
+	def set_value(self, value):
+		self.value = value
+
+	def make_children(self, current_layer_number, node_per_layer_map): #make nodes for each layer
+		if current_layer_number >= len(node_per_layer_map): #terminate recursion
+			return
+
+		for i in range ( node_per_layer_map[current_layer_number] ): 
+			self.children.append( Node() )
+
+		self.children[0].make_children( current_layer_number + 1, node_per_layer_map)
+
+		for i in range(0, len(self.children) ):
+			self.children[i].children = self.children[0].children[:]
+		
+	def print_connections(self, current_layer_number, node_per_layer_map):
+		indent = '	       ' * current_layer_number
+		
+		if current_layer_number >= len(node_per_layer_map): #end function
+			print(f"{indent} {self.node_name}")
+			return
+
+		print(f"{indent} -{self.node_name} is connected to:")
+
+		for i in range( len(self.children) ):
+			try:
+				print(f"{indent}    with weight of {self.weight[i]}")
+			except:
+				pass
+			self.children[i].print_connections(current_layer_number + 1, node_per_layer_map,)
+		return
+
+	def set_random_weights(self, current_layer_number, node_per_layer_map):
+		if current_layer_number >= len(node_per_layer_map): #end function
+			return
+
+		self.weight = [0] * len(self.children)
+
+		for i in range( len(self.children) ):
+			self.weight[i] = random.uniform(0, 100)
+			self.children[i].set_random_weights(current_layer_number + 1, node_per_layer_map)
+		return
+
+	def insertionSort(self, arr, names):
+		#traverse through 1 to len(arr)
+		for i in range(1, len(arr)):
+			key = arr[i]
+			secondkey = names[i]
+			#move elements of arr[0... i-1], that are
+			#greater than key, to one position ahead
+			#of their current position
+			j = i - 1
+			while j >= 0 and key < arr[j] :
+				arr[j+1] = arr[j]
+				names[j+1] = names[j]
+				j -= 1
+			arr[j+1] = key
+			names[j+1] = secondkey
+		return
+
+	def addNodesToArray(self, current_layer_number, node_per_layer_map):
+		if current_layer_number >= len(node_per_layer_map): #end function
+			return
+		for i in range(len(self.children)):
+			arr.append(self.children[i])
+		return
+
+#main
+new_node = Node() #make master node
+new_node.make_children(0,NODE_COUNT_PER_LAYER) #make children from master node
+
+#print node connections w/o weights
+print("--------NODE CONNECTIONS--------")
+new_node.print_connections(0, NODE_COUNT_PER_LAYER)
+
+#adding weights
+new_node.set_random_weights(0, NODE_COUNT_PER_LAYER)
+#print connections w/ weights
+print("\n--------CONNECTIONS WITH WEIGHTS--------")
+new_node.print_connections(0, NODE_COUNT_PER_LAYER)
+
+###ann_input = list(itertools.product([0,1], repeat=4))
+###ann_output = []
+
+###for d in ann_input:
+		###ann_output.append( [d[0] and d[1], d[2] and d[3]] )
+
+##print("\n--------INPUTS & OUTPUTS--------\n\n    INPUT       OUTPUT")
+##for i in range( len(ann_input) ):
+		##print(f"{ann_input[i]} -> {ann_output[i]}")
+
+#add Nodes to array
+new_node.addNodesToArray(0, NODE_COUNT_PER_LAYER)
+
+print(new_node.weight)
+print(arr)
+
+
+#print array of weights
+for i in range(len(arr)):
+	print(f"{arr[i].node_name} --- {new_node.weight[i]}")
+
+#print sorted weights
+###for i in range(len(arr)):
+	###print(arr[i].weight)
+
+#insertion sort weights
+new_node.insertionSort(new_node.weight, arr)
+for i in range(len(arr)):
+	print(f"{arr[i].node_name} --- {new_node.weight[i]}")
+##for i in range(len(arr)):
+	##print(arr[i].node_name)
+
+##for i in range(len(arr)):
+	##print(arr[i].weight)
+
+#print highest weight
+print(arr[-1].node_name)
+print(arr[-1].weight)
+
+next_arr = []
+for i in range (len(arr[-1].children)):
+	print(f"{arr[-1].children[i].node_name} --- {arr[-1].weight[i]}")
+	next_arr.append(arr[-1].children[i])
+
+next_node = arr[-1]
+next_node.addNodesToArray(1, NODE_COUNT_PER_LAYER)
+next_node.insertionSort(next_node.weight, next_arr)
+
+
+for i in range(len(next_node.weight)):
+	print(f"{next_arr[i].node_name} --- {next_node.weight[i]}")
+
+print(next_arr[-1].node_name)
+print(next_arr[-1].weight)
+
+last_node = next_arr[-1]
+last_arr = []	
+
+for i in range (len(next_arr[-1].weight)):
+	print(f"{next_arr[-1].children[i].node_name} --- {next_arr[-1].weight[i]}")
+	last_arr.append(arr[-1].children[i])
+
+last_node.addNodesToArray(2, NODE_COUNT_PER_LAYER)
+last_node.insertionSort(last_node.weight, last_arr)
+
+for i in range(len(last_node.weight)):
+	print(f"{last_arr[i].node_name} --- {last_node.weight[i]}")
+
+print(last_arr[-1].node_name)
+
+print(f"{new_node.node_name} -> {arr[-1].node_name} -> {next_arr[-1].node_name} -> {last_arr[-1].node_name}")
+#for i in range(len( ann_input[0]) ):
+	#print(ann_input[0][i])
