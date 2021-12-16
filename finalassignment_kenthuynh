@@ -3,8 +3,9 @@ import string
 import itertools
 import operator
 
-NODE_COUNT_PER_LAYER = [4,3,2]
-arr = []
+NODE_COUNT_PER_LAYER = [] #amount of nodes and layers
+arr = [] #holds nodes
+route = [] #holds route from node to node through each layer
 
 class Node:
 	def __init__(self):
@@ -18,8 +19,6 @@ class Node:
 			random_letters.append( random.choice(string.ascii_uppercase) )
 		self.node_name = ''.join(random_letters)
 
-	def set_value(self, value):
-		self.value = value
 
 	def make_children(self, current_layer_number, node_per_layer_map): #make nodes for each layer
 		if current_layer_number >= len(node_per_layer_map): #terminate recursion
@@ -61,7 +60,7 @@ class Node:
 			self.children[i].set_random_weights(current_layer_number + 1, node_per_layer_map)
 		return
 
-	def insertionSort(self, arr, names):
+	def insertionSort(self, arr, names): #sorts nodes by weight, does the same to list of node names
 		#traverse through 1 to len(arr)
 		for i in range(1, len(arr)):
 			key = arr[i]
@@ -78,16 +77,51 @@ class Node:
 			names[j+1] = secondkey
 		return
 
-	def addNodesToArray(self, current_layer_number, node_per_layer_map):
-		if current_layer_number >= len(node_per_layer_map): #end function
-			return
+	def addNodesToArray(self, current_layer_number, node_per_layer_map): #adds node of layer to list arr
+		
 		for i in range(len(self.children)):
 			arr.append(self.children[i])
 		return
 
+	def allInOne(self, current_layer_number, node_per_layer_map, names): #where everything happens
+
+		if current_layer_number >= len(node_per_layer_map): #end recursion
+			route.append(self.node_name) #adds destination node to route before ending
+			return
+		
+		else:
+			self.addNodesToArray(current_layer_number, NODE_COUNT_PER_LAYER) #adds nodes of layer to list
+
+			print("---LAYER UNSORTED---") #lists names and weights of current layer nodes
+			for i in range(len(names)):
+				print(f"{names[i].node_name} --- {self.weight[i]}")
+
+			self.insertionSort(self.weight, names) #sorts nodes by weight
+
+			print("---LAYER SORTED---") #lists names and weights of sorted current layer nodes
+			for i in range(len(names)):
+				print(f"{names[i].node_name} --- {self.weight[i]}")
+			
+			route.append(self.node_name) #adds node name to route of nodes taken
+
+			print(f"--- {self.node_name} -> {names[-1].node_name} ---") #prints route taken for that layer
+			
+			temp = names[-1] #sets temp to the highest weighted node aka next node
+			names.clear() #clears list of nodes of layer to prepare for next layer
+			temp.allInOne(current_layer_number + 1, node_per_layer_map, names) #run again with next node / layer
+			
+def generateLayers(numberOfLayers): #generates layers and nodes
+        for i in range(numberOfLayers):
+            NODE_COUNT_PER_LAYER.append(numberOfLayers + 1 - i)
+
+
 #main
+
+generateLayers(5)
+
+
 new_node = Node() #make master node
-new_node.make_children(0,NODE_COUNT_PER_LAYER) #make children from master node
+new_node.make_children(0, NODE_COUNT_PER_LAYER) #make children from master node
 
 #print node connections w/o weights
 print("--------NODE CONNECTIONS--------")
@@ -99,76 +133,17 @@ new_node.set_random_weights(0, NODE_COUNT_PER_LAYER)
 print("\n--------CONNECTIONS WITH WEIGHTS--------")
 new_node.print_connections(0, NODE_COUNT_PER_LAYER)
 
-###ann_input = list(itertools.product([0,1], repeat=4))
-###ann_output = []
+#processes and prints which route to take
+new_node.allInOne(0, NODE_COUNT_PER_LAYER, arr)
 
-###for d in ann_input:
-		###ann_output.append( [d[0] and d[1], d[2] and d[3]] )
+routeString = "" #clean printable route list
+for i in range(len(route)): #adds each node name from route list to stringe
+	routeString += route[i]
+	if i < len(route) - 1: #to format no arrow at the end of string
+		routeString += " ---> "
 
-##print("\n--------INPUTS & OUTPUTS--------\n\n    INPUT       OUTPUT")
-##for i in range( len(ann_input) ):
-		##print(f"{ann_input[i]} -> {ann_output[i]}")
+#prints layers and each node per layer
+print(NODE_COUNT_PER_LAYER)
 
-#add Nodes to array
-new_node.addNodesToArray(0, NODE_COUNT_PER_LAYER)
-
-print(new_node.weight)
-print(arr)
-
-
-#print array of weights
-for i in range(len(arr)):
-	print(f"{arr[i].node_name} --- {new_node.weight[i]}")
-
-#print sorted weights
-###for i in range(len(arr)):
-	###print(arr[i].weight)
-
-#insertion sort weights
-new_node.insertionSort(new_node.weight, arr)
-for i in range(len(arr)):
-	print(f"{arr[i].node_name} --- {new_node.weight[i]}")
-##for i in range(len(arr)):
-	##print(arr[i].node_name)
-
-##for i in range(len(arr)):
-	##print(arr[i].weight)
-
-#print highest weight
-print(arr[-1].node_name)
-print(arr[-1].weight)
-
-next_arr = []
-for i in range (len(arr[-1].children)):
-	print(f"{arr[-1].children[i].node_name} --- {arr[-1].weight[i]}")
-	next_arr.append(arr[-1].children[i])
-
-next_node = arr[-1]
-next_node.addNodesToArray(1, NODE_COUNT_PER_LAYER)
-next_node.insertionSort(next_node.weight, next_arr)
-
-
-for i in range(len(next_node.weight)):
-	print(f"{next_arr[i].node_name} --- {next_node.weight[i]}")
-
-print(next_arr[-1].node_name)
-print(next_arr[-1].weight)
-
-last_node = next_arr[-1]
-last_arr = []	
-
-for i in range (len(next_arr[-1].weight)):
-	print(f"{next_arr[-1].children[i].node_name} --- {next_arr[-1].weight[i]}")
-	last_arr.append(arr[-1].children[i])
-
-last_node.addNodesToArray(2, NODE_COUNT_PER_LAYER)
-last_node.insertionSort(last_node.weight, last_arr)
-
-for i in range(len(last_node.weight)):
-	print(f"{last_arr[i].node_name} --- {last_node.weight[i]}")
-
-print(last_arr[-1].node_name)
-
-print(f"{new_node.node_name} -> {arr[-1].node_name} -> {next_arr[-1].node_name} -> {last_arr[-1].node_name}")
-#for i in range(len( ann_input[0]) ):
-	#print(ann_input[0][i])
+#prints route taken due to highest weight
+print(routeString)
